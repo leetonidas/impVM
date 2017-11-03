@@ -7,6 +7,6 @@
 #include "imp.h"
 #include "execution.h"
 
-int run_fun(size_t index);
+int emu_run_fun(size_t index);
 
 #endif

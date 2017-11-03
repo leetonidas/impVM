@@ -94,7 +94,7 @@ int single_step(imp_fun *fun, size_t *marks, size_t num_marks) {
             return -1;
         top = prog.stack[state.sp--];
         snd = prog.stack[state.sp];
-        prog.stack[state.sp] = (top >= snd) ? 1 : 0;
+        prog.stack[state.sp] = (top <= snd) ? 1 : 0;
         break;
     case IMP_MRK:
         break;
@@ -104,24 +104,19 @@ int single_step(imp_fun *fun, size_t *marks, size_t num_marks) {
     return 0;
 }
 
-size_t get_marks(imp_fun *fun, size_t **array) {
+void get_marks(imp_fun *fun, size_t *array) {
     size_t i;
-    size_t ret = 0;
-    *array = NULL;
 
     for (i = 0; i < fun->code_len; i++){
         if (fun->code[i].mnemonic != IMP_MRK)
             continue;
-        *array = (size_t *) realloc(*array, sizeof(size_t) * (ret + 1));
-        *array[ret++] = i;
+        array[fun->code[i].operand] = i;
     }
-
-    return ret;
 }
 
-int run_fun(size_t index) {
+int emu_run_fun(size_t index) {
     imp_fun *fun;
-    size_t *marks;
+    size_t marks[256];
     size_t num_marks;
 
     if (index >= prog.fun_num)
@@ -129,10 +124,10 @@ int run_fun(size_t index) {
     
     fun = &prog.code[index];
     state.ip = 0;
-    num_marks = get_marks(fun, &marks);
+    get_marks(fun, marks);
 
     while (state.ip < fun->code_len) {
-        if (single_step(fun, marks, num_marks) != 0)
+        if (single_step(fun, marks, 256) != 0)
             return -1;
     }
 

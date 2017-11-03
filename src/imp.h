@@ -7,22 +7,22 @@
 // the highly effictient 6/11 Bit variable length instruction set
 
 typedef enum {
-                // 0123456789A
-    IMP_JZ,     // 000TTTTTTTT
-    IMP_JMP,    // 001TTTTTTTT
-    IMP_CAL,    // 010TTTTTTTT
-    IMP_MRK,    // 011TTTTTTTT
-    IMP_LD,     // 1000AAAAAAA
-    IMP_ST,     // 1001AAAAAAA
-    IMP_LDR,    // 1010AAAAAAA
-    IMP_STR,    // 1011AAAAAAA
-    IMP_IMM,    // 110XXXXXXXX
-    IMP_SHL,    // 11100RRRRRR
-    IMP_SHR,    // 11101RRRRRR
-    IMP_ADD,    // 111100-----
-    IMP_AND,    // 111101-----
-    IMP_OR,     // 111110-----
-    IMP_GE,     // 111111-----
+                // 0123 4567 89A
+    IMP_JZ,     // 000T TTTT TTT
+    IMP_JMP,    // 001T TTTT TTT
+    IMP_CAL,    // 010T TTTT TTT
+    IMP_MRK,    // 011T TTTT TTT
+    IMP_LD,     // 1000 AAAA AAA
+    IMP_ST,     // 1001 AAAA AAA
+    IMP_LDR,    // 1010 AAAA AAA
+    IMP_STR,    // 1011 AAAA AAA
+    IMP_IMM,    // 110X XXXX XXX
+    IMP_SHL,    // 1110 0RRR RRR
+    IMP_SHR,    // 1110 1RRR RRR
+    IMP_ADD,    // 1111 00-- ---
+    IMP_AND,    // 1111 01-- ---
+    IMP_OR,     // 1111 10-- ---
+    IMP_GE,     // 1111 11-- ---
 } imp_mne;
 
 typedef struct {

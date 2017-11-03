@@ -4,6 +4,6 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-int run_fun(size_t index);
+int jit_run_fun(size_t index);
 
 #endif
