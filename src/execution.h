@@ -7,5 +7,7 @@ extern imp_prog prog;
 extern cpu_state state;
 
 int call_fun(size_t index);
+void vm_getc();
+void vm_putc();
 
 #endif

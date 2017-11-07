@@ -2,7 +2,10 @@ module IMP
     ( INS(..),
     encode,
     encodeAll,
-    toInts
+    toInts,
+    toIR,
+    buildInAdd,
+    Prog(..)
     ) where
 
 import Data.Bits
@@ -10,47 +13,109 @@ import Data.Maybe
 import Data.Word
 import qualified Data.List as L
 
-data INS =
+data Prog = Prog {
+    funs :: [[INSHL]],
+    dat :: [Int],
+    datMLen :: Int
+} deriving Show
+
+data INSHL = 
     JZ Int |
     JMP Int |
     CAL Int |
     MRK Int |
     LD Int |
+    LDC Int |
     ST Int |
+    STC Int |
     LDR Int |
+    LDRC Int |
     STR Int |
+    STRC Int |
     IMM Int |
     SHL Int |
     SHR Int |
+    POP |
     ADD |
+    SUB |
+    NOT |
     AND |
     OR |
-    GE 
+    XOR |
+    GE |
+    EQ
     deriving (Show, Read)
+
+data INS =
+    I_JZ Int |
+    I_JMP Int |
+    I_CAL Int |
+    I_MRK Int |
+    I_LD Int |
+    I_ST Int |
+    I_LDR Int |
+    I_STR Int |
+    I_IMM Int |
+    I_SHL Int |
+    I_SHR Int |
+    I_NOT |
+    I_AND |
+    I_OR |
+    I_GE 
+    deriving (Show, Read)
+
+buildInAdd :: [INSHL]
+buildInAdd = [LDRC 1, LDRC 1, MRK 0, LDRC 1, LDRC 1, XOR, LDRC 2, LDRC 2, AND, SHL 1, STRC 1, STRC 1, LDRC 0, JZ 1, JMP 0, MRK 1, POP]
+
+toIR :: Int -> INSHL -> [INS]
+toIR _ (JZ i) = [(I_JZ i)]
+toIR _ (JMP i) = [(I_JMP i)]
+toIR _ (CAL i) = [(I_CAL i)]
+toIR _ (MRK i) = [(I_MRK i)]
+toIR _ (LD i) = [(I_LD i)]
+toIR _ (LDC i) = [(I_IMM 0), (I_LD i)]
+toIR _ (ST i) = [I_ST i]
+toIR _ (STC i) = [(I_IMM 0), (I_ST i)]
+toIR _ (LDR i) = [(I_LDR i)]
+toIR _ (LDRC i) = [(I_IMM 0), (I_LDR i)]
+toIR _ (STR i) = [(I_STR i)]
+toIR _ (STRC i) = [(I_IMM 0), (I_STR i)]
+toIR _ (IMM i) = [(I_IMM i)]
+toIR _ (SHL i) = [(I_SHL i)]
+toIR _ (SHR i) = [(I_SHR i)]
+toIR a (POP) = concatMap (toIR a) [IMM 0, AND, OR]
+toIR a (ADD) = I_CAL a : concatMap (toIR a) [STRC 1, POP]
+toIR a (SUB) = concatMap (toIR a) [NOT, IMM 1, ADD, ADD]
+toIR _ (NOT) = [I_NOT]
+toIR _ AND = [I_AND]
+toIR _ OR = [I_OR]
+toIR x XOR = concatMap (toIR x) [LDRC 1, LDRC 1, OR, LDRC 2, LDRC 2, AND, NOT, AND, STRC 1, POP]
+toIR _ GE = [I_GE]
+toIR x IMP.EQ = concatMap (toIR x) [LDRC 1, LDRC 1, GE, LDRC 1, LDRC 3, GE, AND, STRC 1, POP]
 
 toBits :: Int -> Int -> [Bool]
 toBits len n = map (testBit n) [len - 1,len - 2..0]
 
 encode :: INS -> [Bool]
-encode (JZ i) = [False, False, False] ++ toBits 8 i
-encode (JMP i) = [False, False, True] ++ toBits 8 i
-encode (CAL i) = [False, True, False] ++ toBits 8 i
-encode (MRK i) = [False, True, True] ++ toBits 8 i
+encode (I_JZ i) = [False, False, False] ++ toBits 8 i
+encode (I_JMP i) = [False, False, True] ++ toBits 8 i
+encode (I_CAL i) = [False, True, False] ++ toBits 8 i
+encode (I_MRK i) = [False, True, True] ++ toBits 8 i
 
-encode (LD i) = [True, False, False, False] ++ toBits 7 i
-encode (ST i) = [True, False, False, True] ++ toBits 7 i
-encode (LDR i) = [True, False, True, False] ++ toBits 7 i
-encode (STR i) = [True, False, True, True] ++ toBits 7 i
+encode (I_LD i) = [True, False, False, False] ++ toBits 7 i
+encode (I_ST i) = [True, False, False, True] ++ toBits 7 i
+encode (I_LDR i) = [True, False, True, False] ++ toBits 7 i
+encode (I_STR i) = [True, False, True, True] ++ toBits 7 i
 
-encode (IMM i) = [True, True, False] ++ toBits 8 i
+encode (I_IMM i) = [True, True, False] ++ toBits 8 i
 
-encode (SHL i) = [True, True, True, False, False] ++ toBits 6 i
-encode (SHR i) = [True, True, True, False, True] ++ toBits 6 i
+encode (I_SHL i) = [True, True, True, False, False] ++ toBits 6 i
+encode (I_SHR i) = [True, True, True, False, True] ++ toBits 6 i
 
-encode ADD = [True, True, True, True, False, False]
-encode AND = [True, True, True, True, False, True]
-encode OR  = [True, True, True, True, True, False]
-encode GE  = [True, True, True, True, True, True]
+encode (I_NOT) = [True, True, True, True, False, False]
+encode (I_AND) = [True, True, True, True, False, True]
+encode (I_OR)  = [True, True, True, True, True, False]
+encode (I_GE)  = [True, True, True, True, True, True]
 
 encodeAll :: [INS] -> [Bool]
 encodeAll = concatMap encode

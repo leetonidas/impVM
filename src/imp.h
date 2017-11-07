@@ -19,7 +19,7 @@ typedef enum {
     IMP_IMM,    // 110X XXXX XXX
     IMP_SHL,    // 1110 0RRR RRR
     IMP_SHR,    // 1110 1RRR RRR
-    IMP_ADD,    // 1111 00-- ---
+    IMP_NOT,    // 1111 00-- ---
     IMP_AND,    // 1111 01-- ---
     IMP_OR,     // 1111 10-- ---
     IMP_GE,     // 1111 11-- ---

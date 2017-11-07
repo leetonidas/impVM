@@ -26,6 +26,7 @@ executable asm-exe
   build-depends:       base
                      , asm
                      , bytestring
+                     , cpu
   default-language:    Haskell2010
 
 test-suite asm-test

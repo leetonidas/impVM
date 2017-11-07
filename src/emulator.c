@@ -71,11 +71,10 @@ int single_step(imp_fun *fun, size_t *marks, size_t num_marks) {
     case IMP_SHL:
         prog.stack[state.sp] = prog.stack[state.sp] << ins->operand;
         break;
-    case IMP_ADD:
-        if (state.sp < 2)
+    case IMP_NOT:
+        if (state.sp < 1)
             return -1;
-        top = prog.stack[state.sp--];
-        prog.stack[state.sp] += top;
+        prog.stack[state.sp] = ~prog.stack[state.sp];
         break;
     case IMP_AND:
         if (state.sp < 2)

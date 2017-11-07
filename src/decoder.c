@@ -56,7 +56,7 @@ size_t decode(uint8_t *buf, size_t num, imp_ins_dec *dec) {
             dec[i].operand = tmp & 0x3F;
             break;
         case 0x3C:
-            dec[i].mnemonic = IMP_ADD;
+            dec[i].mnemonic = IMP_NOT;
             break;
         case 0x3D:
             dec[i].mnemonic = IMP_AND;
