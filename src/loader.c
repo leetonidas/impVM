@@ -12,7 +12,7 @@
 #include "execution.h"
 
 int load_fun(uint8_t *buf, size_t start, imp_fun *ret) {
-    size_t dec_num;
+    size_t dec_num, i;
     fun_fmt *fun = (fun_fmt *) (buf + start);
     ret->code_len = ntohll(fun->len);
     ret->code = calloc(sizeof(imp_ins_dec), ret->code_len);
@@ -21,6 +21,21 @@ int load_fun(uint8_t *buf, size_t start, imp_fun *ret) {
         free(ret->code);
         return 1;
     }
+
+    ret->num_marks = 0;
+    ret->marks = NULL;
+
+    for (i = 0; i < dec_num; i++) {
+        if (ret->code[i].mnemonic == IMP_MRK) {
+            if (ret->code[i].operand + 1 > ret->num_marks) {
+                ret->num_marks = ret->code[i].operand + 1;
+                ret->marks = realloc(ret->marks, ret->num_marks * sizeof(size_t));
+            }
+
+            ret->marks[ret->code[i].operand] = i;
+        }
+    }
+
     return 0;
 }
 
@@ -64,5 +79,6 @@ int load_prog_from_file(char *const filename) {
     }
 
     munmap(buf, sb.st_size);
+    close(fd);
     return 0;
 }

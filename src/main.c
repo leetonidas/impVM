@@ -30,9 +30,10 @@ int main(int argc, char **argv) {
 
     prog.stack = mmap(NULL, 0x10000, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0 , 0);
     init();
+    jit(0);
     res = call_fun(0);
     if (res == 0)
-        printf("result: %#lx\n", prog.stack[state.sp]);
+        printf("return code: %#hhx\n", (uint8_t) prog.stack[state.sp]);
     else
         printf("ERROR during execution\n");
     return res;

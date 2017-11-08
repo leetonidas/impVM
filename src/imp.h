@@ -38,6 +38,8 @@ typedef struct {
 
 typedef struct {
     imp_ins_dec *code;
+    size_t *marks;
+    size_t num_marks;
     size_t code_len;
 } imp_fun;
 

@@ -103,6 +103,7 @@ int single_step(imp_fun *fun, size_t *marks, size_t num_marks) {
     return 0;
 }
 
+/*
 void get_marks(imp_fun *fun, size_t *array) {
     size_t i;
 
@@ -111,22 +112,22 @@ void get_marks(imp_fun *fun, size_t *array) {
             continue;
         array[fun->code[i].operand] = i;
     }
-}
+}*/
 
 int emu_run_fun(size_t index) {
     imp_fun *fun;
-    size_t marks[256];
-    size_t num_marks;
+    /*size_t marks[256];
+    size_t num_marks;*/
 
     if (index >= prog.fun_num)
         return -1;
     
     fun = &prog.code[index];
     state.ip = 0;
-    get_marks(fun, marks);
+    //get_marks(fun, marks);
 
     while (state.ip < fun->code_len) {
-        if (single_step(fun, marks, 256) != 0)
+        if (single_step(fun, fun->marks, fun->num_marks) != 0)
             return -1;
     }
 
