@@ -3,6 +3,8 @@
 
 #include "imp.h"
 
+#define user_def_funs 254
+
 extern imp_prog prog;
 extern cpu_state state;
 

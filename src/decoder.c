@@ -6,10 +6,13 @@ size_t decode(uint8_t *buf, size_t num, imp_ins_dec *dec) {
     size_t bitPos;
     size_t i;
     uint32_t tmp;
+    uint8_t *byte_pos;
 
     bitPos = 0;
     for (i = 0; i < num; i++) {
-        tmp = (htonl(*((uint32_t *) (&buf[bitPos / 8]))) << (bitPos % 8)) >> 21;
+        byte_pos = buf + (bitPos / 8);
+        tmp = (((uint32_t) (byte_pos[0])) << 24) | (((uint32_t) (byte_pos[1])) << 16) | (((uint32_t) (byte_pos[2])) << 8);
+        tmp = (tmp << (bitPos % 8)) >> 21;
         switch (tmp >> 5) {
         case 0x0 ... 0x7:
             dec[i].mnemonic = IMP_JZ;

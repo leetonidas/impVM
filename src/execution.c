@@ -1,6 +1,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "jitter.h"
+#include "profiler.h"
 #include "execution.h"
 #include "emulator.h"
 
@@ -27,7 +29,10 @@ int call_fun(size_t index) {
         memcpy(&save, &state, sizeof(cpu_state));
         state.fp = index;
         state.ip = 0;
-        ret = emu_run_fun(index);
+        if (!should_jit(index))
+            ret = emu_run_fun(index);
+        else
+            ret = jit_run_fun(index);
         prog.stack[++save.sp] = prog.stack[state.sp];
         memcpy(&state, &save, sizeof(cpu_state));
         break;

@@ -3,7 +3,7 @@ project(impVm VERSION 0.1 LANGUAGES C)
 
 include(GNUInstallDirs)
 
-set(CMAKE_C_FLAGS "-std=gnu99 -Wall -Wextra -pedantic -g -Wno-unused-parameter")
+set(CMAKE_C_FLAGS "-std=gnu99 -Wall -Wextra -pedantic -O3 -Wno-unused-parameter")
 
 file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*.c")
 
@@ -11,7 +11,7 @@ file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*.c")
 MESSAGE( STATUS "SOURCES:   " ${SOURCES})
 
 add_executable(impVM ${SOURCES})
-#TARGET_LINK_LIBRARIES(lauSim mosquittopp dl protobuf)
+#TARGET_LINK_LIBRARIES(impVM ubsan)
 
 install(TARGETS impVM EXPORT impVMConfig
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

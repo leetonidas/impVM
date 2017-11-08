@@ -8,21 +8,27 @@
 
 #include "imp.h"
 
-typedef struct {
+struct fun_fmt_st{
     uint64_t len;
     uint8_t code[];
-} fun_fmt;
+} __attribute__((packed));
 
-typedef struct {
+typedef struct fun_fmt_st fun_fmt;
+
+struct data_fmt_st{
     uint64_t flen;
     uint64_t mlen;
     uint64_t data[];
-} data_fmt;
+} __attribute__((packed));
 
-typedef struct {
+typedef struct data_fmt_st data_fmt;
+
+struct file_fmt_st {
     uint64_t fnum;
     uint64_t fst[];
-} file_fmt;
+} __attribute__((packed));
+
+typedef struct file_fmt_st file_fmt;
 
 int load_fun(uint8_t *buf, size_t start, imp_fun *ret);
 int load_data(uint8_t *buf, size_t start);

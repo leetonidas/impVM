@@ -31,7 +31,7 @@ int load_data(uint8_t *buf, size_t start) {
     if (prog.data_len < ntohll(dat->flen))
         return -1;
     prog.data = mmap(NULL,
-                     ((prog.data_len * 4) + 0xFFF) & (~0xFFFull),
+                     ((prog.data_len * sizeof(uint64_t)) + 0xFFF) & (~0xFFFull),
                      PROT_READ | PROT_WRITE,
                      MAP_PRIVATE | MAP_ANONYMOUS,0,0);
     for (i = 0; i < ntohll(dat->flen); i++) {
