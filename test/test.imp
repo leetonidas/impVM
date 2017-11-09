@@ -1,4 +1,4 @@
-IMM 5
+LDC 0
 CAL 1
 STRC 0
 --fun--
@@ -21,3 +21,5 @@ CAL 1
 STRC 0
 ADD
 MRK 1
+--data--
+10

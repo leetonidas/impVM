@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "utils.h"
 #include "loader.h"
@@ -16,7 +17,11 @@ int load_fun(uint8_t *buf, size_t start, imp_fun *ret) {
     fun_fmt *fun = (fun_fmt *) (buf + start);
     ret->code_len = ntohll(fun->len);
     ret->code = calloc(sizeof(imp_ins_dec), ret->code_len);
-    dec_num = decode(buf + start + 8, ret->code_len, ret->code);
+    if (ret->code == NULL) {
+        printf("unable to allocate memory for code");
+        return 1;
+    }
+    dec_num = decode(buf + start + sizeof(uint64_t), ret->code_len, ret->code);
     if (dec_num != ret->code_len) {
         free(ret->code);
         return 1;
@@ -30,6 +35,11 @@ int load_fun(uint8_t *buf, size_t start, imp_fun *ret) {
             if (ret->code[i].operand + 1 > ret->num_marks) {
                 ret->num_marks = ret->code[i].operand + 1;
                 ret->marks = realloc(ret->marks, ret->num_marks * sizeof(size_t));
+                if (ret->marks == NULL) {
+                    printf("error reallocating space for marks\n");
+                    free(ret->code);
+                    return 1;
+                }
             }
 
             ret->marks[ret->code[i].operand] = i;
@@ -45,10 +55,21 @@ int load_data(uint8_t *buf, size_t start) {
     prog.data_len = ntohll(dat->mlen);
     if (prog.data_len < ntohll(dat->flen))
         return -1;
+
+    if (prog.data_len == 0) {
+        prog.data = NULL;
+        return 0;
+    }
+    
     prog.data = mmap(NULL,
                      ((prog.data_len * sizeof(uint64_t)) + 0xFFF) & (~0xFFFull),
                      PROT_READ | PROT_WRITE,
                      MAP_PRIVATE | MAP_ANONYMOUS,0,0);
+    if (prog.data == MAP_FAILED) {
+        printf("unable to map memory for data\n");
+        return 1;
+    }
+
     for (i = 0; i < ntohll(dat->flen); i++) {
         prog.data[i] = ntohll(dat->data[i]);
     }
@@ -59,16 +80,52 @@ int load_prog_from_file(char *const filename) {
     size_t i;
     file_fmt *f;
     int fd = open(filename, O_RDONLY);
+    if (fd == -1) {
+        if (errno == EACCES || errno == EFAULT)
+            printf("unable to access file %s\n", filename);
+        if (errno == ENOTDIR || errno == ENOENT) {
+            printf("file %s does not exist\n", filename);
+        }
+        return 1;
+    }
+
     struct stat sb;
     fstat(fd, &sb);
+    if ((sb.st_mode & S_IFMT) != S_IFREG) {
+        printf("%s is not a regular file!\n", filename);
+        return 1;
+    }
+
     uint8_t *buf = (uint8_t *) mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    close(fd);
+
+    if (buf == MAP_FAILED) {
+        printf("unable to map file into memory\n");
+        return 1;
+    }
+
     f = (file_fmt*) buf;
     prog.fun_num = ntohll(f->fnum);
+    if (prog.fun_num > 256) {
+        printf("this machine only supports up to 255 functions\n");
+        munmap(buf, sb.st_size);
+        return 1;
+    }
+
+
     prog.code = calloc(sizeof(imp_fun), prog.fun_num);
+    
+    if (prog.code == NULL) {
+        printf("unable to allocate function array\n");
+        munmap(buf, sb.st_size);
+        return 1;
+    }
+
     for (i = 0; i < prog.fun_num; i++) {
         if (load_fun(buf, ntohll(f->fst[i]), prog.code + i) != 0)
             break;
     }
+    
     if (i != prog.fun_num || load_data(buf, ntohll(f->fst[i])) != 0) {
         for (; i > 0; i--) {
             free(prog.code[i - 1].code);
@@ -79,6 +136,5 @@ int load_prog_from_file(char *const filename) {
     }
 
     munmap(buf, sb.st_size);
-    close(fd);
     return 0;
 }

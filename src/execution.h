@@ -11,5 +11,7 @@ extern cpu_state state;
 int call_fun(size_t index);
 void vm_getc();
 void vm_putc();
+void init_challenge();
+void check_challenge();
 
 #endif

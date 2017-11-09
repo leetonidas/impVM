@@ -174,6 +174,11 @@ int jit(size_t index) {
     len += 4;
 
     buf = mmap(NULL, len, PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+    if (buf == MAP_FAILED) {
+        printf("unable to allocate memory for jit\n");
+        return 11;
+    }
+
     pos = buf + 6;
     memcpy(buf, cmp_init, 6);
     for (i = 0; i < fun->code_len; i++) {

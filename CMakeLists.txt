@@ -3,7 +3,7 @@ project(impVm VERSION 0.1 LANGUAGES C)
 
 include(GNUInstallDirs)
 
-set(CMAKE_C_FLAGS "-std=gnu99 -Wall -Wextra -pedantic -O3 -Wno-unused-parameter")
+set(CMAKE_C_FLAGS "-std=gnu99 -Wall -Wextra -pedantic -g -Wno-unused-parameter")
 
 file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*.c")
 
