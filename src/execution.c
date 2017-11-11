@@ -30,6 +30,33 @@ void lockdown() {
     }
 }
 
+uint64_t get_key_part(uint64_t *key, size_t index) {
+    uint64_t k = key[index / 2];
+    if (index % 2 == 1)
+        return k & 0xFFFFFFFF;
+    else
+        return k >> 32; 
+}
+
+void xtea_encrypt(uint64_t *data, size_t dlen, uint64_t *key) {
+    int i;
+    size_t j;
+    uint32_t sum = 0, tmp;
+    for (i = 0; i < 32; i++) {
+        for (j = 0; j < dlen; j++) {
+            tmp = data[j] & 0xFFFFFFFF;
+            tmp = (data[j] >> 32) + ((((tmp << 4) ^ (tmp >> 5)) + tmp) ^ (sum + get_key_part(key, sum & 3)));
+            data[j] = (data[j] & 0xFFFFFFFF) | (((uint64_t) tmp) << 32);
+        }
+        sum += 0x9E3779B9;
+        for (j = 0; j < dlen; j++) {
+            tmp = data[j] >> 32;
+            tmp = (data[j] + ((((tmp << 4) ^ (tmp >> 5)) + tmp) ^ (sum + get_key_part(key, (sum >> 11) & 3)))) & 0xFFFFFFFF;
+            data[j] = ((data[j] >> 32) << 32) | tmp;
+        }
+    }
+}
+
 void init_challenge() {
     size_t n;
     disable_jit();
@@ -37,10 +64,21 @@ void init_challenge() {
     n = read(fd, rev_flag, 49);
     close(fd);
     rev_flag[n] = 0;
+    fd = open("/dev/urandom", O_RDONLY);
+    read(fd, prog.data + 4, 128 / 8);
+    close(fd);
+    memcpy(prog.data, rev_flag, sizeof(uint64_t) * 4);
+    //memcpy(prog.data, "\x08\x07\x06\x05\x04\x03\x02\x01", 8);
+    //memcpy(prog.data + 4, "\x78\x56\x34\x12\x67\x45\x23\x01\x9a\x78\x56\x34\x89\x67\x45\x23", 16);
+    xtea_encrypt(prog.data, 4, prog.data + 4);
 }
 
 void check_challenge() {
-    printf("%s", rev_flag);
+    if (memcmp(rev_flag, prog.data, sizeof(uint64_t) * 4) == 0)
+        printf("%s", rev_flag);
+    else {
+        printf("try harder next time\n");
+    }
 }
 
 int call_fun(size_t index) {

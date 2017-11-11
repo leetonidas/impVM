@@ -73,6 +73,7 @@ addCode = [LDRC 1, LDRC 1, XOR, LDRC 2, LDRC 2, AND, SHL 1, STRC 1, STRC 1, IMM 
 
 inlineAdd' :: Int -> [INSHL] -> [INSHL] -> [INSHL]
 inlineAdd' _ [] ac = ac
+inlineAdd' i (SUB:xs) ac = inlineAdd' i ([NOT, IMM 1, ADD, ADD] ++ xs) ac
 inlineAdd' i (ADD:xs) ac = inlineAdd' (i + 1) xs $ ac ++ (MRK i : addCode ++ [JZ i, OR])
 inlineAdd' i (x:xs) ac = inlineAdd' i xs $ ac ++ [x]
 
