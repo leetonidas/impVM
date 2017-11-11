@@ -60,7 +60,7 @@ int load_data(uint8_t *buf, size_t start) {
         prog.data = NULL;
         return 0;
     }
-    
+
     prog.data = mmap(NULL,
                      ((prog.data_len * sizeof(uint64_t)) + 0xFFF) & (~0xFFFull),
                      PROT_READ | PROT_WRITE,
@@ -73,6 +73,63 @@ int load_data(uint8_t *buf, size_t start) {
     for (i = 0; i < ntohll(dat->flen); i++) {
         prog.data[i] = ntohll(dat->data[i]);
     }
+    return 0;
+}
+
+int load_prog_from_stdin() {
+    uint64_t val, i;
+    uint64_t *starts;
+    uint8_t *buf;
+
+    if(readN((uint8_t *) &val, sizeof(val)))
+        return 1;
+
+    prog.fun_num = ntohll(val);
+    if (prog.fun_num > 256) {
+        printf("this machine only supports up to 255 functions\n");
+        return 1;
+    }
+
+    starts = calloc(sizeof(uint64_t), prog.fun_num + 1);
+    prog.code = calloc(sizeof(imp_fun), prog.fun_num);
+    
+    if (prog.code == NULL || starts == NULL) {
+        printf("unable to allocate function array or starts\n");
+        return 1;
+    }
+
+    for (i = 0; i < prog.fun_num + 1; i++) {
+        if (readN((uint8_t *) &val, sizeof(val))) {
+            free (starts);
+            free (prog.code);
+            return 1;
+        }
+        starts[i] = ntohll(val); 
+    }
+
+    for (i = 0; i < prog.fun_num; i++) {
+        val = starts[i + 1] - starts[i];
+        buf = calloc(1, val);
+        if (buf == NULL || readN(buf, val) || load_fun(buf, 0, prog.code + i)) {
+            free(starts);
+            free(prog.code);
+            return 1;
+        }
+        free(buf);
+    }
+    free(starts);
+
+    if (readN((uint8_t *) &val, sizeof(val)))
+        return 1;
+    i = ntohll(val);
+    buf = calloc(8, i + 2);
+    if (buf == NULL)
+        return 1;
+    memcpy(buf, &val, sizeof(val));
+    if (readN(buf + 8, i * 8 + 8))
+        return 1;
+    load_data(buf, 0);
+    free(buf);
     return 0;
 }
 
@@ -107,7 +164,7 @@ int load_prog_from_file(char *const filename) {
     f = (file_fmt*) buf;
     prog.fun_num = ntohll(f->fnum);
     if (prog.fun_num > 256) {
-        printf("this machine only supports up to 255 functions\n");
+        printf("this machine only supports up to 256 functions\n");
         munmap(buf, sb.st_size);
         return 1;
     }

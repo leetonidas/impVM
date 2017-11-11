@@ -6,8 +6,10 @@ import System.Endian
 import Debug.Trace
 import Data.Word
 import Data.Bits
+import Data.Maybe
 import qualified Data.List as L
 import qualified Data.ByteString as BS
+import System.Console.GetOpt
 
 import IMP
 
@@ -31,7 +33,7 @@ assemble pr = trace (unlines $ map show funsLow) $ buildHeader (map length funsA
         ++ concatMap (uncurry buildFun) (zip (map length funsLow) funsAss)
         ++ buildData (datMLen pr) (dat pr)
     where numFuns = length $ funs pr
-          funsLow = map (concatMap (toIR numFuns)) $ funs pr ++ [buildInAdd]
+          funsLow = map (concatMap (toIR numFuns)) $ funs pr ++ if any (not . null . filter (== ADD)) (funs pr) then [buildInAdd] else []
           funsAss = map (toInts . encodeAll) funsLow
 
 splitIntoFuns :: [String] -> [String] -> [[String]] -> [[String]]
@@ -46,4 +48,39 @@ readAsm lns = Prog (map (map read) funTxt) fdatRd $ length fdatRd
           funTxt = filter (not . null) . map (filter (not . null)) $ splitIntoFuns fns [] []
 
 main :: IO ()
-main = (\ a -> BS.writeFile (a !! 1) =<< (BS.pack . assemble . readAsm . lines) <$> readFile (a !! 0)) =<< getArgs
+main = do
+    (opt, _) <- asmOpts =<< getArgs
+    p <- (readAsm . lines) <$> (readFile . fromJust $ optInput opt)
+    let p' = if optInlineAdd opt then p {funs = map inlineAdd $ funs p} else p
+    BS.writeFile (fromJust $ optOutput opt) . BS.pack $ assemble p'
+
+data Options = Options {
+    optOutput      :: Maybe FilePath,
+    optInput       :: Maybe FilePath,
+    optInlineAdd   :: Bool
+    } deriving (Show)
+
+defaultOptions :: Options
+defaultOptions = Options Nothing Nothing False
+
+options :: [OptDescr (Options -> Options)]
+options =
+    [ Option ['o'] ["output"]
+        (ReqArg (\ f opts -> opts { optOutput = Just f })
+                "FILE")
+        "output FILE"
+    , Option ['c'] []
+        (ReqArg (\ f opts -> opts { optInput = Just f })
+                "FILE")
+        "input FILE"
+    , Option ['i'] ["inline-add"]
+        (NoArg (\ opts -> opts { optInlineAdd = True }))
+        "attempt to inline additions"
+    ]
+
+asmOpts :: [String] -> IO (Options, [String])
+asmOpts argv =
+   case getOpt Permute options argv of
+      (o,n,[]  ) -> return (foldl (flip id) defaultOptions o, n)
+      (_,_,errs) -> ioError (userError (concat errs ++ usageInfo header options))
+  where header = "Usage: asm [OPTION...]"

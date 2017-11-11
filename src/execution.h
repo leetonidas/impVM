@@ -13,5 +13,6 @@ void vm_getc();
 void vm_putc();
 void init_challenge();
 void check_challenge();
+void lockdown();
 
 #endif

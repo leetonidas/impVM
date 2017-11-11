@@ -34,4 +34,6 @@ int load_fun(uint8_t *buf, size_t start, imp_fun *ret);
 int load_data(uint8_t *buf, size_t start);
 int load_prog_from_file(char *const filename);
 
+int load_prog_from_stdin();
+
 #endif

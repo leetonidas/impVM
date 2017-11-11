@@ -1,9 +1,10 @@
 module IMP
-    ( INS(..),
+    ( INSHL(..),
     encode,
     encodeAll,
     toInts,
     toIR,
+    inlineAdd,
     buildInAdd,
     Prog(..)
     ) where
@@ -44,7 +45,7 @@ data INSHL =
     XOR |
     GE |
     EQ
-    deriving (Show, Read)
+    deriving (Show, Read, Eq)
 
 data INS =
     I_JZ Int |
@@ -65,7 +66,33 @@ data INS =
     deriving (Show, Read)
 
 buildInAdd :: [INSHL]
-buildInAdd = [LDRC 1, LDRC 1, MRK 0, LDRC 1, LDRC 1, XOR, LDRC 2, LDRC 2, AND, SHL 1, STRC 1, STRC 1, LDRC 0, JZ 1, JMP 0, MRK 1, POP]
+buildInAdd = [LDRC 1, LDRC 1, MRK 0, LDRC 1, LDRC 1, XOR, LDRC 2, LDRC 2, AND, SHL 1, STRC 1, STRC 1, LDRC 0, JZ 1, JMP 0, MRK 1, OR]
+
+addCode :: [INSHL]
+addCode = [LDRC 1, LDRC 1, XOR, LDRC 2, LDRC 2, AND, SHL 1, STRC 1, STRC 1, IMM 0, LDRC 1, GE]
+
+inlineAdd' :: Int -> [INSHL] -> [INSHL] -> [INSHL]
+inlineAdd' _ [] ac = ac
+inlineAdd' i (ADD:xs) ac = inlineAdd' (i + 1) xs $ ac ++ (MRK i : addCode ++ [JZ i, OR])
+inlineAdd' i (x:xs) ac = inlineAdd' i xs $ ac ++ [x]
+
+getTar :: INSHL -> Maybe Int
+getTar (JMP i) = Just i
+getTar (JZ i) = Just i
+getTar _ = Nothing
+
+getMark :: INSHL -> Maybe Int
+getMark (MRK i) = Just i
+getMark _ = Nothing
+
+checkMark :: [INSHL] -> Bool
+checkMark func = all (`elem` mapMaybe getMark func) $ mapMaybe getTar func
+
+nextMark :: [INSHL] -> Int
+nextMark = maximum . (:) 0 . map (+ 1) . mapMaybe getMark
+
+inlineAdd :: [INSHL] -> [INSHL]
+inlineAdd func = if not $ checkMark func then error "unresolved jumps" else inlineAdd' (nextMark func) func []
 
 toIR :: Int -> INSHL -> [INS]
 toIR _ (JZ i) = [(I_JZ i)]

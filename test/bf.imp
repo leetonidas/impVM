@@ -105,6 +105,8 @@ STC 0
 JZ 11
 JMP 0
 MRK 11
+CAL 252
+CAL 253
 
 --fun--
 LDRC 0

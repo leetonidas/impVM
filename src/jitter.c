@@ -154,6 +154,8 @@ int jit(size_t index) {
     str_cmp *str;
     imm_shr_shl_cmp *imm_cmp;
 
+    lockdown();
+
     if (index >= prog.fun_num)
         return 1;
 
