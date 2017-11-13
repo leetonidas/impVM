@@ -1,0 +1,11 @@
+{
+    "uuid": "c3372fb8-c6f4-11e7-99d0-931844b11f96",
+    "name": "impVM",
+    "categories": ["rev"],
+    "points": 400,
+    "bonus": 100,
+    "flags": ["hxp{W3-h4V3-to-60-D3ep3R}"],
+    "ports": [[8080,1337]],
+    "downloadable": ["rev.cmp","BrainFuckInterpreter.cmp"],
+    "author": "iead"
+}

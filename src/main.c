@@ -9,7 +9,7 @@
 #include "loader.h"
 #include "execution.h"
 
-char pwn_flag[] = "FLAG{F45t-Bu7-fR461L3}";
+char pwn_flag[] = "";
 const char optstr[] = "inl";
 
 const struct option opts[4] = {{"from-stdin", 0, NULL, 'i'},

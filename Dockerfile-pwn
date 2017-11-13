@@ -1,0 +1,15 @@
+FROM debian:stretch
+
+# install your pwn.py dependencies here
+RUN apt-get update && apt-get install -y \
+	python3 \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --create-home --shell /bin/bash pwn
+USER pwn
+WORKDIR /home/pwn
+
+COPY pwn.py META.json xtea_de.cmp /home/pwn/
+
+CMD ["/home/pwn/pwn.py", "localhost"]
+

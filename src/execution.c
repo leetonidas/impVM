@@ -59,7 +59,15 @@ void xtea_encrypt(uint64_t *data, size_t dlen, uint64_t *key) {
 
 void init_challenge() {
     size_t n;
+    if (is_lockdown) {
+        printf("unable to initialize challenge in lockdown mode\n");
+        exit(1);
+    }
     disable_jit();
+    if (prog.data_len < 6) {
+        printf("data segment too small to initialize challenge\n");
+        exit(1);
+    }
     int fd = open("rev_flag.txt", O_RDONLY);
     n = read(fd, rev_flag, 49);
     close(fd);
@@ -120,8 +128,13 @@ int call_fun(size_t index) {
 }
 
 void vm_getc() {
-    uint64_t val = (uint64_t) getchar();
-    prog.stack[++state.sp] = val;
+    if (is_lockdown) {
+        printf("JIT is way too fast to wait for input!\n");
+        prog.stack[++state.sp] = 0;
+    } else {
+        uint64_t val = (uint64_t) getchar();
+        prog.stack[++state.sp] = val;
+    }
 }
 
 void vm_putc() {
